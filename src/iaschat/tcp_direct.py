@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 tcp_direct.py is the main script for Task 1: It runs a chat based on TCP direct connection
@@ -9,7 +9,10 @@ import socket
 import select
 import sys
 
-from queue import Queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 __author__ = "Tim Bachmann, Raphael Kreft"
 __license__ = "MIT"
@@ -38,49 +41,52 @@ def handle_client_input(dest, data):
 
 if __name__ == "__main__":
     args = parse_args()
-    print('Try to Connect to {0} on port {1}'.format(args.ip, args.p))
 
     if not port_valid(args.p):
         exit("Port {} is not in range!".format(args.p))
 
-    inputs = [sys.stdin.fileno()]
-    outputs = []
-    message_queue = Queue()
+    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    conn.settimeout(3)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client = None
-    server = None
+    inputs = [sys.stdin]
+    outputs = []
+    message_queue = queue.Queue()
 
     # Try to Connect to Peer
+    print('Try to Connect to {0} on port {1}'.format(args.ip, args.p))
     try:
-        sock.connect((args.ip, args.port))
-        client = sock
-        inputs.append(client)
+        # sock.bind(("localhost", int(args.p)))
+        conn.connect((args.ip, args.p))
+        conn.settimeout(0)
+        inputs.append(conn)
+        sock = None
         print("successfully connected to {}".format(args.ip))
     except IOError:
         # If Connection not Successful start to listen for incoming Connections
         print("Connection not successful, starting server and listen for incoming Connections!...")
-        server = sock
-        server.setblocking(False)
-        server.bind((socket.gethostname(), args.p))
-        server.listen(1)
-        inputs.append(server)
+        conn.close()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setblocking(False)
+        sock.bind(("localhost", int(args.p)))
+        sock.listen(1)
+        inputs.append(sock)
 
     while inputs:
-        readable, writeable, exceptional = select.select(inputs, outputs, [inputs, outputs])
+        readable, writeable, exceptional = select.select(inputs, outputs, inputs)
         for r in readable:
-            if r is server:  # Accept new Connection
+            if r is sock:  # Accept new Connection
                 conn, addr = r.accept()
+                print("New Connection from {}".format(addr))
                 conn.setblocking(False)
                 inputs.append(conn)
             elif r is sys.stdin:
-                message_queue.put(input().encode())  # TODO does the inputmethod work
-                if r not in outputs:
-                    outputs.append(r)
+                message_queue.put(sys.stdin.readline().encode())  # TODO does the inputmethod work
+                if conn not in outputs:
+                    outputs.append(conn)
             else:  # client has new data
                 data = r.recv(BUFFERSIZE)
                 if data:
-                    handle_client_input(r.peeraddress(), data)
+                    handle_client_input(r.getpeername(), data)
                 else:
                     inputs.remove(r)
                     if r in outputs:
@@ -89,11 +95,13 @@ if __name__ == "__main__":
 
         for w in writeable:
             if not message_queue.empty():
+                print("Try to send...")
                 w.send(message_queue.get_nowait())
             else:
                 outputs.remove(w)
 
         for e in exceptional:
+            print("Exception!")
             inputs.remove(e)
             if e in outputs:
                 outputs.remove(e)
