@@ -80,7 +80,7 @@ if __name__ == "__main__":
                 conn.setblocking(False)
                 inputs.append(conn)
             elif r is sys.stdin:
-                message_queue.put(sys.stdin.readline().encode())  # TODO does the inputmethod work
+                message_queue.put(sys.stdin.readline().encode())
                 if conn not in outputs:
                     outputs.append(conn)
             else:  # client has new data
