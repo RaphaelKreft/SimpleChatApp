@@ -15,5 +15,8 @@ __status__ = "Production"
 
 
 class ServerProtocol(Enum):
-    REGISTER = "REG"
-    REQUEST = "REQ"
+    REGISTER = "REG"    # register on Server
+    REQUEST = "REQ"     # request peer info
+    GROUPS = "GRP"      # request list of all groups
+    GACCESS = "GAC"     # request group access
+    CRGROUP = "CGR"     # request to create a group

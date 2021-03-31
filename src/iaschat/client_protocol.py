@@ -18,3 +18,6 @@ class ClientProtocol(Enum):
     PEERINFO = "PIN"    # Server returned Info about other Client
     LOGINDATA = "LIN"   # Server returns Client's Nickname (Answer to REQ)
     MSG = "MSG"         # New Message from other client
+    GRPINFO = "GRI"     # Server returned Connection-details of a specific Multicast Domain/Group
+    GRPTABLE = "GTA"    # Server returned
+    GRPCREATED = "GCR"  # Server returned if group has been created
