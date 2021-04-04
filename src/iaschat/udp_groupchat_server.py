@@ -50,9 +50,9 @@ def register_client(name):
 
 
 def get_group_info(to_lookup):
-    print_debug("Connection {} requested groupinfo for {}".format(addr, to_lookup))
+    print_debug("Connection {} requested group info for {}".format(addr, to_lookup))
     if to_lookup in GROUPS.keys():
-        packaged_addr = "{}_{}".format(name_to_addr.get(to_lookup)[0], name_to_addr.get(to_lookup)[1])
+        packaged_addr = "{}_{}".format(GROUPS.get(to_lookup)[0], GROUPS.get(to_lookup)[1])
         message_queue.put((addr, "{}:{}".format(ClientProtocol.GRPINFO.value, packaged_addr)))
     else:
         message_queue.put((addr, "{}:".format(ClientProtocol.GRPINFO.value)))
@@ -68,10 +68,10 @@ def get_group_table():
 def create_group(new_group):
     name, ip, port = new_group.split("_")
     if name in GROUPS.keys():
-        message_queue.put("{}:".format(ClientProtocol.GRPCREATED.value))
+        message_queue.put((addr, "{}:".format(ClientProtocol.GRPCREATED.value)))
     else:
         GROUPS[name] = (ip, port)
-        message_queue.put("{}:1".format(ClientProtocol.GRPCREATED.value))
+        message_queue.put((addr, "{}:1".format(ClientProtocol.GRPCREATED.value)))
     outputs.append(sock)
 
 

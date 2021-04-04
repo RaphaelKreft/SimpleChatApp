@@ -141,9 +141,9 @@ if __name__ == "__main__":
                 if read.startswith("cmd:groups"):
                     request_group_table()
                 elif read.startswith("cmd:enter"):
-                    request_group_access(read.split(" ")[1])
+                    request_group_access(read.split(" ")[1][0:-1])
                 elif read.startswith("cmd:create"):
-                    create_group(* read.split(" "))
+                    create_group(read.split(" ")[1], read.split(" ")[2], read.split(" ")[3][0:-1])
                 else:
                     send_message(sys.stdin.readline())
                 if sock not in outputs:
