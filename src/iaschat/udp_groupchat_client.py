@@ -4,6 +4,7 @@
 udp_client: Allows to chat with one other udp client or groups. It first connects to a udp_server and register itself
             and requests the connection information from a peer or group. When the server response with valid
             connection-info then you can start chatting.
+            Multicast IPS: 224.0.0.0 through 230.255.255.255
 """
 
 import argparse
@@ -29,6 +30,8 @@ __email__ = "r.kreft@unibas.ch"
 __status__ = "Production"
 
 BUFFER_SIZE = 1024
+NICKNAME = None
+SERVER = None
 CORRESPONDENT = None
 
 MULTICAST_TTL = 1
@@ -38,7 +41,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Enter IP and Port to Connect to")
     parser.add_argument('-ip', type=str, default="127.0.0.1", required=True)
     parser.add_argument('-p', '-port', type=int, default=2020, required=True)
-    parser.add_argument('-mynick', type=str, required=True)
+    parser.add_argument('-mp', '-myport', type=int, required=True)
     return parser.parse_args()
 
 
@@ -75,7 +78,7 @@ def establish_connection(group_info):
         CORRESPONDENT = (ip, int(port))
         reconfigure_socket(ip)
         print_debug("Set Correspondent to {}".format(CORRESPONDENT))
-        message_queue.put("{}:---{}--- Joined group!".format(ClientProtocol.MSG.value, args.mynick))
+        message_queue.put("{}:---{}--- Joined group!".format(ClientProtocol.MSG.value, NICKNAME))
         outputs.append(sock)
     else:
         exit("Could not find group-name you requested on Server!")
@@ -99,15 +102,11 @@ if __name__ == "__main__":
     message_queue = queue.Queue()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('', int(args.p) + 1))
+    sock.bind(('', int(args.mp)))
     inputs.append(sock)
 
     # First set correspondent to the server
     CORRESPONDENT = (args.ip, args.p)
-
-    # Send requests to server
-    print_debug("Send requests to Server...")
-    request_name(args.mynick)
 
     while inputs:
         readable, writeable, exceptional = select.select(inputs, outputs, inputs)
@@ -118,8 +117,11 @@ if __name__ == "__main__":
                 if data:
                     toHandle = data.decode().split(":")
                     if toHandle[0] == ClientProtocol.LOGINDATA.value:
-                        print("Your nickname on the server is: {}".format(toHandle[1]))
-                        args.mynick = toHandle[1]
+                        if toHandle[1]:
+                            print("Your nickname on the server is: {}".format(toHandle[1]))
+                            NICKNAME = toHandle[1]
+                        else:
+                            print("Failed to Register on Server, name already occupied!")
                     elif toHandle[0] == ClientProtocol.GRPINFO.value:
                         establish_connection(toHandle[1])
                     elif toHandle[0] == ClientProtocol.MSG.value:
@@ -143,7 +145,9 @@ if __name__ == "__main__":
                 elif read.startswith("cmd:enter"):
                     request_group_access(read.split(" ")[1][0:-1])
                 elif read.startswith("cmd:create"):
-                    create_group(read.split(" ")[1], read.split(" ")[2], read.split(" ")[3][0:-1])
+                    create_group(read.split(" ")[1], read.split(" ")[2][0:-1], args.mp)
+                elif read.startswith("cmd:register"):
+                    request_name(read.split(" ")[1])
                 else:
                     send_message(sys.stdin.readline())
                 if sock not in outputs:

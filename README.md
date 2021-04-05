@@ -38,5 +38,27 @@ The Other Client then sees the incoming request and is also setup to text with t
 When Connected, all things except the commands are send as messgaes to the other client.
 
 ## UDP Group Chat
+The groupchat version of the udp-chat also consists of a server and several clients. The Server now serves as a register for all the Groups
+available. The clients can register itself with names, can create groups, ask for all groups available and enter one
+
 ### Execute
+**Server:** Example: python3 udp_groupchat_server.py -p 1234, gives port of the server
+
+**Client:** Example: python3 udp_groupchat_client.py -p 1234 -ip localhost -mp 5678, gives port and Ip of the Server as well as the
+own port
+
 ### Usage
+**cmd:register MYNICKNAME**
+
+**cmd:groups** Servers response is a list with the names of existing groups
+
+**cmd:create NAME IP** Server Creates a Group if ip and name are not used by any other group on the server
+
+**cmd:enter NAME** Server sends group-info if group exists. Client then reconfigures socket to work on Group Multicast
+
+After that one can just type and send messages.
+
+## Task 3
+To add the feature, that one can list all members of a group, one could solve it on application-level:
+One Could add a new command to the ClientProtocol. This command would lead all the clients connected to the Multicast to
+send their name/information to the multicast. So all the Clients will know the names of each other.

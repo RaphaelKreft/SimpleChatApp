@@ -28,6 +28,7 @@ __status__ = "Production"
 
 
 BUFFER_SIZE = 1024
+MULTICAST_IPS = []
 GROUPS = {}
 
 
@@ -40,12 +41,12 @@ def parse_args():
 def register_client(name):
     print_debug("Connection {} wants to register with name {}".format(addr, name))
     # Check if own nickname already registered and matching incoming address
-    if not (name.lower() in name_to_addr.keys() and name_to_addr.get(name.lower()) is addr):
-        while name.lower() in name_to_addr.keys():
-            name += random.choice(['a', 'b', 'c', 'd'])
+    if not name.lower() in name_to_addr.keys() or name.lower() in name_to_addr.keys() and name_to_addr[name.lower()] == addr:
         name_to_addr[name] = addr
-    print_debug("{} got registered with name {}".format(addr, name))
-    message_queue.put((addr, "{}:{}".format(ClientProtocol.LOGINDATA.value, name)))
+        message_queue.put((addr, "{}:{}".format(ClientProtocol.LOGINDATA.value, name)))
+        print_debug("{} got registered with name {}".format(addr, name))
+    else:
+        message_queue.put((addr, "{}:".format(ClientProtocol.LOGINDATA.value)))
     outputs.append(sock)
 
 
@@ -67,11 +68,12 @@ def get_group_table():
 
 def create_group(new_group):
     name, ip, port = new_group.split("_")
-    if name in GROUPS.keys():
+    if name in GROUPS.keys() or ip in MULTICAST_IPS:
         message_queue.put((addr, "{}:".format(ClientProtocol.GRPCREATED.value)))
     else:
         GROUPS[name] = (ip, port)
-        message_queue.put((addr, "{}:1".format(ClientProtocol.GRPCREATED.value)))
+        MULTICAST_IPS.append(ip)
+        message_queue.put((addr, "{}:{}".format(ClientProtocol.GRPCREATED.value, name)))
     outputs.append(sock)
 
 
