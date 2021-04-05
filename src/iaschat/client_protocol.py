@@ -21,3 +21,4 @@ class ClientProtocol(Enum):
     GRPINFO = "GRI"     # Server returned Connection-details of a specific Multicast Domain/Group
     GRPTABLE = "GTA"    # Server returned
     GRPCREATED = "GCR"  # Server returned if group has been created
+    PTPREQUEST = "PTP"  # Client got request to communicate directly from other client

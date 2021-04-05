@@ -39,12 +39,12 @@ def parse_args():
 def register_client(name):
     print_debug("Connection {} wants to register with name {}".format(addr, name))
     # Check if own nickname already registered and matching incoming address
-    if not (name.lower() in name_to_addr.keys() and name_to_addr.get(name.lower()) is addr):
-        while name.lower() in name_to_addr.keys():
-            name += random.choice(['a', 'b', 'c', 'd'])
+    if not name.lower() in name_to_addr.keys() or name.lower() in name_to_addr.keys() and name_to_addr[name.lower()] == addr:
         name_to_addr[name] = addr
-    print_debug("{} got registered with name {}".format(addr, name))
-    message_queue.put((addr, "{}:{}".format(ClientProtocol.LOGINDATA.value, name).encode()))
+        message_queue.put((addr, "{}:{}".format(ClientProtocol.LOGINDATA.value, name)))
+        print_debug("{} got registered with name {}".format(addr, name))
+    else:
+        message_queue.put((addr, "{}:".format(ClientProtocol.LOGINDATA.value)))
     outputs.append(sock)
 
 
@@ -52,9 +52,9 @@ def get_user_info(to_lookup):
     print_debug("Connection {} requested peerinfo for {}".format(addr, to_lookup))
     if to_lookup in name_to_addr.keys():
         packaged_addr = "{}_{}".format(name_to_addr.get(to_lookup)[0], name_to_addr.get(to_lookup)[1])
-        message_queue.put((addr, "{}:{}".format(ClientProtocol.PEERINFO.value, packaged_addr).encode()))
+        message_queue.put((addr, "{}:{}".format(ClientProtocol.PEERINFO.value, packaged_addr)))
     else:
-        message_queue.put((addr, "{}:".format(ClientProtocol.PEERINFO.value).encode()))
+        message_queue.put((addr, "{}:".format(ClientProtocol.PEERINFO.value)))
     outputs.append(sock)
 
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
             if not message_queue.empty():
                 addr, to_send = message_queue.get_nowait()
                 print_debug("Try to send to {}".format(addr))
-                w.sendto(to_send, addr)
+                w.sendto(to_send.encode(), addr)
             else:
                 outputs.remove(w)
 
