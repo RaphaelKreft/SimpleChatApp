@@ -28,6 +28,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Enter IP and Port to Connect to")
     parser.add_argument('-ip', type=str, default="127.0.0.1", required=True)
     parser.add_argument('-p', '-port', type=int, default=2020, required=True)
+    parser.add_argument('-mp', '-myport', type=int, default=2020, required=True)
     return parser.parse_args()
 
 
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     # Try to Connect to Peer
     print('Try to Connect to {0} on port {1}'.format(args.ip, args.p))
     try:
-        # sock.bind(("localhost", int(args.p)))
+        # conn.bind(("localhost", int(args.mp)))
         conn.connect((args.ip, args.p))
         conn.settimeout(0)
         inputs.append(conn)
@@ -67,7 +68,7 @@ if __name__ == "__main__":
         conn.close()
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
-        sock.bind(("localhost", int(args.p)))
+        sock.bind(("localhost", int(args.mp)))
         sock.listen(1)
         inputs.append(sock)
 
