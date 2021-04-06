@@ -3,6 +3,8 @@
 This is a Software written for an exercise of the "Internet and Security" lecture at the University of Basel
 This Version consists of 5 executable Scripts, that are executed to start chatting with one of three Methods.
 
+**Package available at**: https://test.pypi.org/project/IAS-Chat-rt/
+
 ## TCP Chat
 ### Execute
 Each comm-partner needs to execute /src/iaschat/tcp_direct.py ans give Ip, Port of the communicationpartner as well as 
