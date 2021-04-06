@@ -32,9 +32,7 @@ __status__ = "Production"
 BUFFER_SIZE = 1024
 NICKNAME = None
 SERVER = None
-CORRESPONDENT = None
-
-MULTICAST_TTL = 1
+GROUP = None
 
 
 def parse_args():
@@ -46,49 +44,56 @@ def parse_args():
 
 
 def send_message(msg):
-    message_queue.put("{}:{}".format(ClientProtocol.MSG.value, msg))
-    outputs.append(sock)
+    message_queue.put(("{}:{}".format(ClientProtocol.MSG.value, msg), GROUP))
+    outputs.append(chatSock)
 
 
 def request_name(name):
-    message_queue.put("{}:{}".format(ServerProtocol.REGISTER.value, name))
-    outputs.append(sock)
+    message_queue.put(("{}:{}".format(ServerProtocol.REGISTER.value, name), SERVER))
+    outputs.append(ServerSock)
 
 
 def request_group_access(group_name):
-    message_queue.put("{}:{}".format(ServerProtocol.GACCESS.value, group_name))
-    outputs.append(sock)
+    message_queue.put(("{}:{}".format(ServerProtocol.GACCESS.value, group_name), SERVER))
+    outputs.append(ServerSock)
 
 
 def request_group_table():
     print_debug("Requesting group-table...")
-    message_queue.put("{}:".format(ServerProtocol.GROUPS.value))
-    outputs.append(sock)
+    message_queue.put(("{}:".format(ServerProtocol.GROUPS.value), SERVER))
+    outputs.append(ServerSock)
 
 
 def create_group(name, ip, port):
-    message_queue.put("{}:{}_{}_{}".format(ServerProtocol.CRGROUP.value, name, ip, port))
-    outputs.append(sock)
+    message_queue.put(("{}:{}_{}_{}".format(ServerProtocol.CRGROUP.value, name, ip, port), SERVER))
+    outputs.append(ServerSock)
 
 
 def establish_connection(group_info):
     if group_info:
         ip, port = group_info.split("_")
-        global CORRESPONDENT
-        CORRESPONDENT = (ip, int(port))
-        reconfigure_socket(ip)
-        print_debug("Set Correspondent to {}".format(CORRESPONDENT))
-        message_queue.put("{}:---{}--- Joined group!".format(ClientProtocol.MSG.value, NICKNAME))
-        outputs.append(sock)
+        global GROUP
+        GROUP = (ip, int(port))
+        reconfigure_socket(ip, port)
+        print_debug("Set Correspondent to {}".format(GROUP))
+        send_message("Hey there I am {}".format(NICKNAME))
     else:
-        exit("Could not find group-name you requested on Server!")
+        print("Could not find group-name you requested on Server!")
 
 
-def reconfigure_socket(group_ip):
+def reconfigure_socket(group_ip, group_port):
     # In this version all clients need to use same port
-    print_debug("Reconfigure Socket with ip {}".format(group_ip))
+    print_debug("Configure chatsocket with ip {}".format(group_ip))
+    global chatSock
+    chatSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     val = struct.pack('4sL', socket.inet_aton(group_ip), socket.INADDR_ANY)
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, val)
+    # set socket to work on multicast Address
+    chatSock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, val)
+    chatSock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', 1))
+    # configure socket, so that address can be reused
+    chatSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    chatSock.bind(('', int(group_port)))
+    inputs.append(chatSock)
 
 
 if __name__ == "__main__":
@@ -101,17 +106,21 @@ if __name__ == "__main__":
     outputs = []
     message_queue = queue.Queue()
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('', int(args.mp)))
-    inputs.append(sock)
+    # Create Socket to Communicate with Server
+    ServerSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ServerSock.bind(('localhost', int(args.mp)))
+    inputs.append(ServerSock)
+
+    # Create Socket for Multicast group-chats
+    chatSock = None
 
     # First set correspondent to the server
-    CORRESPONDENT = (args.ip, args.p)
+    SERVER = (args.ip, args.p)
 
     while inputs:
         readable, writeable, exceptional = select.select(inputs, outputs, inputs)
         for r in readable:
-            if r is sock:
+            if r in [ServerSock, chatSock]:
                 data, addr = r.recvfrom(BUFFER_SIZE)
                 print_debug("Received data from {}".format(addr))
                 if data:
@@ -145,20 +154,19 @@ if __name__ == "__main__":
                 elif read.startswith("cmd:enter"):
                     request_group_access(read.split(" ")[1][0:-1])
                 elif read.startswith("cmd:create"):
-                    create_group(read.split(" ")[1], read.split(" ")[2][0:-1], args.mp)
+                    create_group(read.split(" ")[1], read.split(" ")[2], read.split(" ")[3][0:-1])
                 elif read.startswith("cmd:register"):
                     request_name(read.split(" ")[1])
-                else:
-                    send_message(sys.stdin.readline())
-                if sock not in outputs:
-                    outputs.append(sock)
+                elif chatSock:
+                    send_message(read)
 
         for w in writeable:
             if message_queue.empty():
                 outputs.remove(w)
             else:
-                print_debug("Sending to {}".format(CORRESPONDENT))
-                w.sendto(message_queue.get_nowait().encode(), CORRESPONDENT)
+                text, dest = message_queue.get_nowait()
+                print_debug("Sending to {}".format(dest))
+                w.sendto(text.encode(), dest)
 
         for e in exceptional:
             exit("Exception!")

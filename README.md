@@ -52,7 +52,7 @@ own port
 
 **cmd:groups** Servers response is a list with the names of existing groups
 
-**cmd:create NAME IP** Server Creates a Group if ip and name are not used by any other group on the server
+**cmd:create NAME IP PORT** Server Creates a Group if ip and name are not used by any other group on the server
 
 **cmd:enter NAME** Server sends group-info if group exists. Client then reconfigures socket to work on Group Multicast
 

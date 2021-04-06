@@ -41,7 +41,7 @@ def parse_args():
 def register_client(name):
     print_debug("Connection {} wants to register with name {}".format(addr, name))
     # Check if own nickname already registered and matching incoming address
-    if not name.lower() in name_to_addr.keys() or name.lower() in name_to_addr.keys() and name_to_addr[name.lower()] == addr:
+    if (not name.lower() in name_to_addr.keys()) or (name.lower() in name_to_addr.keys() and name_to_addr[name.lower()] == addr):
         name_to_addr[name] = addr
         message_queue.put((addr, "{}:{}".format(ClientProtocol.LOGINDATA.value, name)))
         print_debug("{} got registered with name {}".format(addr, name))

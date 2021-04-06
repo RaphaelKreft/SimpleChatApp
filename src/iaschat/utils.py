@@ -8,7 +8,3 @@ def port_valid(port):
 def print_debug(text):
     if DEBUG == 1:
         print(">> {}".format(text))
-
-
-def valid_multicast_ip(ip):
-    return
