@@ -9,7 +9,10 @@ This Version consists of 5 executable Scripts, that are executed to start chatti
 ### Execute
 Each comm-partner needs to execute /src/iaschat/tcp_direct.py ans give Ip, Port of the communicationpartner as well as 
 the port you want to be reachable at.
+
 **Example:** python3 tcp_direct.py -ip localhost -port 2020 -myport 2021
+
+**With Package installed:** python3 -m iaschat.tcp_direct -ip localhost -port 2020 -myport 2021
 
 ### Usage
 When the other side is not reachable the Program waits for incoming Connections at "myport" and accepts it when there is one
@@ -22,9 +25,12 @@ nickname and can request the connection-information from other nicknames to chat
 ### Execute 
 
 **Server**: give Own IP/Port,  Example: python3 udp_server.py -ip localhost -port 2020
+
+**With Package installed:** python3 -m iaschat.udp_server -ip localhost -port 2020
             
-**Client**: give Servers IP/Port and own Port(you want to be reachable at), Example: python3 udp_server.py -ip localhost -port 2020
--myport 2021
+**Client**: give Servers IP/Port and own Port(you want to be reachable at), Example: python3 udp_client.py -ip localhost -port 2020 -myport 2021
+
+**With Package installed:** python3 -m iaschat.udp_client -ip localhost -port 2020 -myport 2021
 
 ### Usage
 When the server is started no further interaction is required.
@@ -46,8 +52,12 @@ available. The clients can register itself with names, can create groups, ask fo
 ### Execute
 **Server:** Example: python3 udp_groupchat_server.py -p 1234, gives port of the server
 
+**With Package installed:** python3 -m iaschat.udp_groupchat_server -p 1234
+
 **Client:** Example: python3 udp_groupchat_client.py -p 1234 -ip localhost -mp 5678, gives port and Ip of the Server as well as the
 own port
+
+**With Package installed:** python3 -m iaschat.udp_groupchat_client -p 1234 -ip localhost -mp 5678
 
 ### Usage
 **cmd:register MYNICKNAME**
