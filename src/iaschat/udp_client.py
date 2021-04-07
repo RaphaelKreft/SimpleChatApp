@@ -83,7 +83,6 @@ if __name__ == "__main__":
 
     # First set correspondent to the server
     SERVER = (args.ip, args.p)
-    GROUP = (args.ip, args.p)
 
     while inputs:
         readable, writeable, exceptional = select.select(inputs, outputs, inputs)
@@ -105,7 +104,7 @@ if __name__ == "__main__":
                         print("msg: {}".format(toHandle[1]))
                     elif toHandle[0] == ClientProtocol.PTPREQUEST.value:
                         print("Direct comm-request from {}".format(toHandle[1]))
-                        GROUP = addr
+                        CORRESPONDENT = addr
                         print("Correspondent set to {}".format(addr))
                     else:
                         print_debug("Invalid Command received: {}".format(toHandle[0]))
